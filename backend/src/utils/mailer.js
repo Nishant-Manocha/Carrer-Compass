@@ -1,19 +1,27 @@
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
+  service: "gmail",
   host: "smtp.gmail.com",
-  port: 465,
-  secure: true, // true for 465, false for other ports
+  port: 587,
+  secure: false, // Port 587 uses STARTTLS (secure: false)
   auth: {
     user: process.env.EMAIL_USER || "nishantmanocha885@gmail.com",
     pass: process.env.EMAIL_PASS
-  }
+  },
+  // Increased timeouts for better reliability on cloud networks like Render
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000
 });
 
 // Verify connection configuration on startup
 transporter.verify((error, success) => {
   if (error) {
     console.error("SMTP Connection Error:", error);
+    if (error.code === 'ESOCKET' || error.code === 'ENETUNREACH') {
+      console.warn("TIP: This networking error often happens on Render. We have switched to Port 587 (STARTTLS) for better compatibility.");
+    }
   } else {
     console.log("SMTP Server is ready to take our messages");
   }
