@@ -23,7 +23,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await mongoose.disconnect();
-  await mongoServer.stop();
+  if (mongoServer) await mongoServer.stop();
 });
 
 beforeEach(async () => {
@@ -143,7 +143,7 @@ describe("Backend Comprehensive Tests", () => {
     const userData = {
       name: "Auth Tester",
       email: "auth@example.com",
-      password: "password123"
+      password: "Password@123"
     };
 
     test("Complete Auth Flow: Signup -> Verify OTP -> Login", async () => {
@@ -186,7 +186,7 @@ describe("Backend Comprehensive Tests", () => {
       const largeData = "a".repeat(1024 * 1024); // 1MB string
       const res = await request(app)
         .post("/auth/signup")
-        .send({ name: largeData, email: "large@test.com", password: "123" });
+        .send({ name: largeData, email: "large@test.com", password: "Password@123" });
       // Express default limit is usually 100kb, should return 413 or handled error
       expect([413, 400, 500]).toContain(res.statusCode);
     });

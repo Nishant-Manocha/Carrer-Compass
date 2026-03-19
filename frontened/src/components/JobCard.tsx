@@ -39,7 +39,7 @@ export function JobCard({ job }: JobCardProps) {
               {job.title}
             </h3>
             <p className="mt-0.5 font-mono text-xs text-muted-foreground">
-              {job.team}
+              {job.teamOrDepartment}
             </p>
             <p className="mt-2 text-sm text-muted-foreground text-pretty leading-relaxed">
               {job.shortDescription}

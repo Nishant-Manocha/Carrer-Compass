@@ -28,23 +28,23 @@ export default function UserDashboard() {
 
   const fetchApplications = async () => {
     try {
-      // 1. Fetch from Local Storage first
-      const local = JSON.parse(localStorage.getItem("myApplications") || "[]");
-      const allJobs = getPublicJobs();
-      
-      const enhancedLocal = local.map((app: any) => {
-        const job = allJobs.find(j => j.id === app.jobId);
-        return {
-          ...app,
-          jobTitle: job ? job.title : "Unknown Job",
-          jobShortDescription: job ? job.shortDescription : "N/A"
-        };
-      });
-      setLocalApplications(enhancedLocal);
-
-      // 2. Fetch from Database
+      // 1. Fetch from Database (Primary source)
       const db = await getUserApplications();
-      setDbApplications(db);
+
+      // 2. Fetch from Local Storage (Fallback for newly applied jobs not yet synced)
+      const local = JSON.parse(localStorage.getItem("myApplications") || "[]");
+      
+      // Filter local applications to only those that aren't in the DB yet
+      const dbJobIds = new Set(db.map((app: any) => String(app.jobId)));
+      const uniqueLocal = local.filter((app: any) => !dbJobIds.has(String(app.jobId)));
+
+      // 3. Combine them
+      const mergedApplications = [...db, ...uniqueLocal].sort((a, b) => 
+        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+      );
+
+      setDbApplications(mergedApplications);
+      setLocalApplications([]); 
     } catch (error: any) {
       toast.error(error.message || "Failed to fetch applications");
     } finally {
@@ -53,8 +53,7 @@ export default function UserDashboard() {
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.clear();
     navigate("/login");
   };
 
@@ -86,7 +85,7 @@ export default function UserDashboard() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Applications</p>
-                  <h3 className="text-2xl font-bold">{dbApplications.length + localApplications.length}</h3>
+                  <h3 className="text-2xl font-bold">{dbApplications.length}</h3>
                 </div>
               </div>
             </CardContent>
@@ -116,60 +115,33 @@ export default function UserDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {/* Combine and show unique applications */}
-                  {dbApplications.length === 0 && localApplications.length === 0 ? (
+                  {/* Show merged and unique applications */}
+                  {dbApplications.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                         You haven't applied for any jobs yet.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    <>
-                      {dbApplications.map((app) => (
-                        <TableRow key={app._id}>
-                          <TableCell className="font-mono text-xs">{app.jobId}</TableCell>
-                          <TableCell className="font-medium">{app.jobTitle}</TableCell>
-                          <TableCell className="max-w-xs truncate text-xs text-muted-foreground">
-                            {app.jobShortDescription}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="gap-1 text-xs"
-                              onClick={() => navigate(`/jobs/${app.jobId}`)}
-                            >
-                              Know More <ExternalLink className="h-3 w-3" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {localApplications.map((app, index) => {
-                        // Avoid duplicates if already in DB
-                        const inDb = dbApplications.some(dbApp => dbApp.jobId === app.jobId);
-                        if (inDb) return null;
-                        
-                        return (
-                          <TableRow key={`local-${index}`}>
-                            <TableCell className="font-mono text-xs">{app.jobId}</TableCell>
-                            <TableCell className="font-medium">{app.jobTitle}</TableCell>
-                            <TableCell className="max-w-xs truncate text-xs text-muted-foreground">
-                              {app.jobShortDescription}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="gap-1 text-xs"
-                                onClick={() => navigate(`/jobs/${app.jobId}`)}
-                              >
-                                Know More <ExternalLink className="h-3 w-3" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </>
+                    dbApplications.map((app, index) => (
+                      <TableRow key={app._id || `app-${index}`}>
+                        <TableCell className="font-mono text-xs">{app.jobId}</TableCell>
+                        <TableCell className="font-medium">{app.jobTitle}</TableCell>
+                        <TableCell className="max-w-xs truncate text-xs text-muted-foreground">
+                          {app.jobShortDescription}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="gap-1 text-xs"
+                            onClick={() => navigate(`/jobs/${app.jobId}`)}
+                          >
+                            Know More <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
                   )}
                 </TableBody>
               </Table>

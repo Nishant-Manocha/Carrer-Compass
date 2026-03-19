@@ -3,7 +3,7 @@ export type JobStatus = 'draft' | 'public' | 'closed';
 export interface Job {
   id: string;
   title: string;
-  team: string;
+  teamOrDepartment: string;
   location: string;
   shortDescription: string;
   fullDescription: string;

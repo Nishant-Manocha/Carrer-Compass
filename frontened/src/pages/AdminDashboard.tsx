@@ -88,8 +88,7 @@ export default function AdminDashboard() {
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.clear();
     navigate("/login");
   };
 
@@ -184,7 +183,7 @@ export default function AdminDashboard() {
                     {jobs.map((job) => (
                       <TableRow key={job.id}>
                         <TableCell className="font-medium">{job.title}</TableCell>
-                        <TableCell>{job.team || job.teamOrDepartment}</TableCell>
+                        <TableCell>{job.teamOrDepartment}</TableCell>
                         <TableCell>
                           <Select 
                             value={job.status} 

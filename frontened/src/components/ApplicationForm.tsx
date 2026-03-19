@@ -47,11 +47,30 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
 
     // Validate all
     const newErrors: FieldErrors = {};
-    if (!name.trim()) newErrors.name = 'Name is required';
-    if (!email.trim()) newErrors.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = 'Invalid email address';
-    if (!phone.trim()) newErrors.phone = 'Phone is required';
-    if (!resumeFile) newErrors.resume = 'Resume is required';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\d{10}$/;
+
+    if (!name.trim()) {
+      newErrors.name = 'Name is required';
+    } else if (name.trim().length < 2) {
+      newErrors.name = 'Name must be at least 2 characters long';
+    }
+
+    if (!email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!emailRegex.test(email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!phoneRegex.test(phone.trim())) {
+      newErrors.phone = 'Phone number must be exactly 10 digits';
+    }
+
+    if (!resumeFile) {
+      newErrors.resume = 'Resume file is required';
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -186,8 +205,8 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
               id="phone"
               type="tel"
               value={phone}
-              onChange={e => setPhone(e.target.value)}
-              placeholder="+1 (555) 000-0000"
+              onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+              placeholder="10-digit phone number"
               className={errors.phone ? 'border-destructive ring-destructive' : ''}
             />
             {errors.phone && (

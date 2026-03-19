@@ -19,19 +19,38 @@ router.post("/signup", async (req, res) => {
     return res.status(400).json({ error: "Invalid input format" });
   }
 
+  // Password validation: 8+ chars, upper, number, special
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  if (!passwordRegex.test(password)) {
+    return res.status(400).json({ 
+      error: "Password must be at least 8 characters long and contain at least one uppercase letter, one number, and one special character." 
+    });
+  }
+
   try {
-    let user = await User.findOne({ email: email.toLowerCase() });
+    const userEmail = email.toLowerCase();
+    let user = await User.findOne({ email: userEmail });
     
+    // Debug log
+    console.log(`[DEBUG] Signup attempt for: ${userEmail}`);
+    if (user) {
+      console.log(`[DEBUG] User found in DB. isVerified: ${user.isVerified}`);
+    } else {
+      console.log(`[DEBUG] No user found with this email in DB.`);
+    }
+
+    // Restrict signup for admin emails
+    const adminEmails = ["admin@gmail.com"];
+    if (adminEmails.includes(userEmail)) {
+      return res.status(403).json({ error: "This is a restricted admin email. Please login directly." });
+    }
+
     if (user && user.isVerified) {
       return res.status(400).json({ error: "User already exists" });
     }
 
-    // Restrict admin role assignment
-    const adminEmails = ["nishantmanocha05@gmail.com", "admin@gmail.com"];
-    let finalRole = "user";
-    if (role === "admin" && adminEmails.includes(email.toLowerCase())) {
-      finalRole = "admin";
-    }
+    // Automatically assign admin role based on whitelisted emails
+    let finalRole = adminEmails.includes(email.toLowerCase()) ? "admin" : "user";
 
     const otp = generateOTP();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes

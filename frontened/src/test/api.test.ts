@@ -17,13 +17,13 @@ describe('Career Board API', () => {
   it('rejects application with missing required fields', () => {
     const result = submitApplication({
       jobId: '1',
-      name: '',
+      name: 'J',
       email: 'test@example.com',
-      phone: '555-0000',
+      phone: '1234567890',
       resumeUrl: 'local://resume.pdf',
     });
     expect(result.success).toBe(false);
-    expect(result.error).toContain('Name is required');
+    expect(result.error).toContain('at least 2 characters');
   });
 
   // API/Validation Test 3: Invalid email is rejected
@@ -32,7 +32,7 @@ describe('Career Board API', () => {
       jobId: '1',
       name: 'John',
       email: 'not-an-email',
-      phone: '555-0000',
+      phone: '1234567890',
       resumeUrl: 'local://resume.pdf',
     });
     expect(result.success).toBe(false);
@@ -45,7 +45,7 @@ describe('Career Board API', () => {
       jobId: '1',
       name: 'Jane Smith',
       email: 'jane@example.com',
-      phone: '555-1234',
+      phone: '1234567890',
       resumeUrl: 'local://resume.pdf',
     };
 
@@ -63,7 +63,7 @@ describe('Career Board API', () => {
       jobId: '1',
       name: 'John Doe',
       email: 'john@example.com',
-      phone: '555-9999',
+      phone: '1234567890',
       resumeUrl: 'local://resume.pdf',
     });
     expect(result.success).toBe(true);
@@ -91,7 +91,7 @@ describe('Career Board API', () => {
       jobId: '999',
       name: 'Test',
       email: 'test@test.com',
-      phone: '555',
+      phone: '1234567890',
       resumeUrl: 'local://r.pdf',
     });
     expect(result.success).toBe(false);

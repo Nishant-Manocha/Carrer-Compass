@@ -45,8 +45,7 @@ export default function Index() {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.clear();
     window.location.reload();
   };
 

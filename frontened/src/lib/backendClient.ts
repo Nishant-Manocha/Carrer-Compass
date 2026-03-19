@@ -1,6 +1,6 @@
 import { AuthResponse, Job, User } from "./types";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "https://carrer-compass-2.onrender.com";
 
 function getAuthHeader() {
   const token = localStorage.getItem("token");
@@ -41,7 +41,7 @@ function toNetworkFriendlyError(err: unknown): Error {
   // Browser fetch throws TypeError on network/CORS issues
   if (err instanceof TypeError) {
     return new Error(
-      "Failed to reach the server. Make sure the backend is running on http://localhost:4000 and CORS_ORIGIN matches your frontend URL."
+      `Failed to reach the server. Make sure the backend is running at ${API_BASE} and CORS settings allow this origin.`
     );
   }
   return err instanceof Error ? err : new Error("Something went wrong");

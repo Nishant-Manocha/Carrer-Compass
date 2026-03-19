@@ -8,9 +8,9 @@ let applications: Application[] = [];
 
 export const applicationSchema = z.object({
   jobId: z.string().min(1, 'Job ID is required'),
-  name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be under 100 characters'),
+  name: z.string().trim().min(2, 'Name must be at least 2 characters long').max(100, 'Name must be under 100 characters'),
   email: z.string().trim().email('Invalid email address').max(255),
-  phone: z.string().trim().min(1, 'Phone is required').max(20, 'Phone must be under 20 characters'),
+  phone: z.string().trim().regex(/^\d{10}$/, 'Phone number must be exactly 10 digits'),
   resumeUrl: z.string().min(1, 'Resume is required'),
 });
 

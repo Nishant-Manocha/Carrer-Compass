@@ -23,9 +23,10 @@ import bcrypt from "bcryptjs";
 
 const PORT = Number(process.env.PORT || 4000);
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/career_compass";
-const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5173";
+const CORS_ORIGIN = process.env.CORS_ORIGIN || "https://carrer-compass-m82y.vercel.app";
 const corsAllowList = CORS_ORIGIN.split(",")
   .map((s) => s.trim())
+  .map((s) => s.replace(/\/$/, "")) // Remove trailing slashes
   .filter(Boolean);
 
 const uploadsDir = path.join(__dirname, "..", "uploads");
@@ -251,13 +252,16 @@ app.post("/applications", async (req, res) => {
 
   const cleanedName = String(name || "").trim();
   const cleanedEmail = String(email || "").trim().toLowerCase();
-  const cleanedPhone = String(phone || "").trim();
+  const cleanedPhone = String(phone || "").trim().replace(/\D/g, '');
   const cleanedResumeRef = String(resumeReference || "").trim();
 
   if (!jobId) return res.status(400).json({ error: "Job ID is required", field: "jobId" });
   if (!cleanedName) return res.status(400).json({ error: "Name is required", field: "name" });
+  if (cleanedName.length < 2) return res.status(400).json({ error: "Name must be at least 2 characters long", field: "name" });
   if (!cleanedEmail) return res.status(400).json({ error: "Email is required", field: "email" });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanedEmail)) return res.status(400).json({ error: "Invalid email format", field: "email" });
   if (!cleanedPhone) return res.status(400).json({ error: "Phone is required", field: "phone" });
+  if (cleanedPhone.length !== 10) return res.status(400).json({ error: "Phone number must be exactly 10 digits", field: "phone" });
   if (!cleanedResumeRef) return res.status(400).json({ error: "Resume is required", field: "resume" });
 
   const job = await Job.findOne({ id: String(jobId), status: "public" }).lean();
@@ -321,13 +325,13 @@ app.use((err, _req, res, _next) => {
 });
 
 async function ensureSeedAdmins() {
-  const adminEmails = ["nishantmanocha05@gmail.com", "admin@gmail.com"];
+  const adminEmails = ["admin@gmail.com"];
   for (const email of adminEmails) {
     const existingAdmin = await User.findOne({ email });
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash("admin123", 10);
       await User.create({
-        name: email === "admin@gmail.com" ? "System Admin" : "Nishant Manocha",
+        name: "System Admin",
         email,
         password: hashedPassword,
         role: "admin",
@@ -407,10 +411,21 @@ export { app };
 
 async function main() {
   if (process.env.NODE_ENV === "test") return;
-  await mongoose.connect(MONGO_URI);
-  await ensureSeedAdmins();
-  await ensureSeedJobs();
-
+  
+  try {
+    await mongoose.connect(MONGO_URI);
+    // eslint-disable-next-line no-console
+    console.log(`Connected to MongoDB: ${MONGO_URI.split('@').pop()}`);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("MongoDB Connection Error Details:");
+    // eslint-disable-next-line no-console
+    if (err.code === 'ENOTFOUND') {
+      console.error("\nTIP: This is a DNS error. Please check internet/VPN/DNS settings.");
+    }
+    process.exit(1);
+  }
+  
   app.listen(PORT, () => {
     // eslint-disable-next-line no-console
     console.log(`Backend listening on :${PORT}`);
