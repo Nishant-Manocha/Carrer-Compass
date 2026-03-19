@@ -1,67 +1,66 @@
-import nodemailer from "nodemailer";
+import { Resend } from 'resend';
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false, // Must be false for port 587
-  requireTLS: true,
-  auth: {
-    user: process.env.EMAIL_USER || "nishantmanocha885@gmail.com",
-    pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    // This forces the connection to use IPv4
-    family: 4
-  },
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 10000
-});
+const resend = new Resend(process.env.RESEND_API_KEY || "re_iGz4WMjX_4he2W7NZ1HDBw5b5asu3bAzn");
 
-// Verify connection configuration on startup
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("SMTP Connection Error:", error);
-    if (error.code === 'ESOCKET' || error.code === 'ENETUNREACH') {
-      console.warn("TIP: This networking error on Render is fixed by forcing IPv4 and using Port 587 (STARTTLS).");
-    }
-  } else {
-    console.log("SMTP Server is ready to take our messages");
-  }
-});
-
-export const sendEmail = async (to, subject, text, html) => {
+/**
+ * Sends a general email using Resend
+ */
+export async function sendEmail(to, subject, text) {
   try {
-    console.log(`Attempting to send email to: ${to}`);
-    const info = await transporter.sendMail({
-      from: `"Career-Compass" <${process.env.EMAIL_USER || "nishantmanocha885@gmail.com"}>`,
-      to,
-      subject,
-      text,
-      html
+    const { data, error } = await resend.emails.send({
+      from: 'Career-Compass <onboarding@resend.dev>',
+      to: [to],
+      subject: subject,
+      text: text,
     });
-    console.log("Email sent successfully to %s: %s", to, info.messageId);
-    return info;
-  } catch (error) {
-    console.error("Error sending email to %s:", to, error);
-    return null;
-  }
-};
 
-export const sendOTPEmail = async (email, otp) => {
-  const subject = "Verify your account - Career-Compass";
-  const text = `Your OTP for Career-Compass account verification is: ${otp}. It will expire in 10 minutes.`;
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-      <h2 style="color: #333; text-align: center;">Welcome to Career-Compass</h2>
-      <p>Hi there,</p>
-      <p>Thank you for signing up. Please use the following One-Time Password (OTP) to verify your account:</p>
-      <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #007bff; border-radius: 5px; margin: 20px 0;">
-        ${otp}
-      </div>
-      <p>This OTP will expire in <strong>10 minutes</strong>. If you did not request this, please ignore this email.</p>
-      <p>Best regards,<br>The Career-Compass Team</p>
-    </div>
-  `;
-  return await sendEmail(email, subject, text, html);
-};
+    if (error) {
+      console.error("Resend Error:", error);
+      throw error;
+    }
+
+    return data;
+  } catch (err) {
+    console.error("Resend Catch Error:", err);
+    throw err;
+  }
+}
+
+/**
+ * Sends an OTP email using Resend
+ */
+export async function sendOTPEmail(to, otp) {
+  const subject = "Verify your Career-Compass Account";
+  const text = `Your OTP for verification is: ${otp}. This code will expire in 10 minutes.`;
+  
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'Career-Compass <onboarding@resend.dev>',
+      to: [to],
+      subject: subject,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #2563eb; text-align: center;">Career-Compass</h2>
+          <p>Hi there,</p>
+          <p>Thank you for joining Career-Compass! Please use the following One-Time Password (OTP) to verify your account:</p>
+          <div style="background: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #111827;">${otp}</span>
+          </div>
+          <p style="font-size: 14px; color: #6b7280;">This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #9ca3af; text-align: center;">&copy; 2026 Career-Compass. All rights reserved.</p>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend OTP Error:", error);
+      throw error;
+    }
+
+    return data;
+  } catch (err) {
+    console.error("Resend OTP Catch Error:", err);
+    throw err;
+  }
+}
