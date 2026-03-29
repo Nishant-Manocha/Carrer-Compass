@@ -5,13 +5,6 @@ import { app } from "../src/index.js";
 import { User } from "../src/models/User.js";
 import { Job } from "../src/models/Job.js";
 import { Application } from "../src/models/Application.js";
-import { jest } from "@jest/globals";
-
-// Mock the mailer
-jest.unstable_mockModule("../src/utils/mailer.js", () => ({
-  sendEmail: jest.fn().mockResolvedValue({ messageId: "test-id" }),
-  sendOTPEmail: jest.fn().mockResolvedValue({ messageId: "test-otp-id" }),
-}));
 
 let mongoServer;
 
@@ -34,7 +27,6 @@ beforeEach(async () => {
 });
 
 describe("Backend Comprehensive Tests", () => {
-  
   describe("Core API Tests", () => {
     test("GET /jobs list returns data", async () => {
       await Job.create({
@@ -106,7 +98,7 @@ describe("Backend Comprehensive Tests", () => {
         });
       expect(res.statusCode).toBe(201);
       expect(res.body.applicantEmail).toBe("john@example.com");
-      
+
       const saved = await Application.findOne({ applicantEmail: "john@example.com" });
       expect(saved).toBeDefined();
     }, 30000);
@@ -152,7 +144,7 @@ describe("Backend Comprehensive Tests", () => {
       expect(signupRes.statusCode).toBe(200);
       expect(signupRes.body.message).toContain("OTP sent");
 
-      // Get OTP from DB (since mailer is mocked)
+      // Get OTP from DB (mailer is a no-op in NODE_ENV=test)
       const user = await User.findOne({ email: userData.email });
       const otp = user.otp;
 

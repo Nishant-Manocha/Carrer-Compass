@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { fetchPublicJobs } from '@/lib/backendClient';
 import { Job } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const container = {
   animate: { transition: { staggerChildren: 0.05 } },
@@ -83,9 +84,15 @@ export default function Index() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl text-balance text-center">
             Help us build the future of work
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground text-center">
-            {jobs.length} open {jobs.length === 1 ? 'position' : 'positions'}
-          </p>
+          {loading ? (
+            <div className="mt-2 flex justify-center">
+              <Skeleton className="h-4 w-32" />
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground text-center">
+              {jobs.length} open {jobs.length === 1 ? 'position' : 'positions'}
+            </p>
+          )}
         </motion.div>
 
         <motion.div
@@ -94,11 +101,33 @@ export default function Index() {
           animate="animate"
           className="space-y-3"
         >
-          {jobs.map(job => (
-            <motion.div key={job.id} variants={item}>
-              <JobCard job={job} />
-            </motion.div>
-          ))}
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="p-5 border rounded-lg space-y-3">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-6 w-1/3" />
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              ))}
+            </div>
+          ) : jobs.length === 0 ? (
+            <div className="text-center py-12 border border-dashed rounded-lg">
+              <p className="text-muted-foreground">No open positions at the moment.</p>
+              <Button variant="link" onClick={() => window.location.reload()} className="mt-2">
+                Refresh to check again
+              </Button>
+            </div>
+          ) : (
+            jobs.map(job => (
+              <motion.div key={job.id} variants={item}>
+                <JobCard job={job} />
+              </motion.div>
+            ))
+          )}
         </motion.div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { AuthResponse, Job, User } from "./types";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "https://carrer-compass-2.onrender.com";
+/** Override with `VITE_API_URL` in `.env` (see `.env.example`). Defaults to local backend. */
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:4000";
 
 function getAuthHeader() {
   const token = localStorage.getItem("token");

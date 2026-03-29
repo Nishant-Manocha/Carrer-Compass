@@ -1,9 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { mockPublicJobsApi } from './api-mocks';
 
 test.describe('Career-Compass E2E User Flow', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to the home page using relative path
+    await mockPublicJobsApi(page);
     await page.goto('/');
+    // Same browser context is reused across tests; clear so logged-out flows are not affected.
+    await page.evaluate(() => localStorage.clear());
   });
 
   test('should show home page with jobs', async ({ page }) => {
@@ -12,16 +15,12 @@ test.describe('Career-Compass E2E User Flow', () => {
   });
 
   test('should redirect to signup when clicking a job card while logged out', async ({ page }) => {
-    // Wait for at least one job card to appear
-    const jobTitle = page.locator('h3').first();
-    await expect(jobTitle).toBeVisible({ timeout: 15000 });
-    
-    // Click on the job title to navigate
-    await jobTitle.click({ force: true });
-    
-    // Check for redirection to signup
-    await expect(page).toHaveURL(/.*signup/, { timeout: 10000 });
-    await expect(page.getByRole('heading', { name: 'Sign up', exact: true })).toBeVisible();
+    const card = page.locator('div.cursor-pointer').filter({ hasText: 'Senior Frontend Engineer' }).first();
+    await expect(card).toBeVisible({ timeout: 20000 });
+    await card.click();
+
+    await expect(page).toHaveURL(/\/signup\/?$/, { timeout: 15000 });
+    await expect(page.getByRole('heading', { name: 'Sign up', exact: true })).toBeVisible({ timeout: 10000 });
   });
 
   test('should allow navigation between login and signup', async ({ page }) => {
@@ -78,20 +77,20 @@ test.describe('Career-Compass E2E User Flow', () => {
     });
 
     await page.goto('/jobs/non-existent-id-12345');
-    await expect(page.getByText(/Oops! Page not found/i)).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText('Explore other opportunities')).toBeVisible();
+    
+    // Check for 404 text
+    await expect(page.getByText(/Oops! Page not found/i)).toBeVisible({ timeout: 15000 });
+    // Check for the "Explore other opportunities" section which is part of the 404 page
+    await expect(page.getByText(/Explore other opportunities/i)).toBeVisible({ timeout: 15000 });
   });
 
   test('should persist redirect URL through signup and verify flow', async ({ page }) => {
-    // Navigate to a specific job while logged out
-    // Since jobs are dynamic, we just use a generic ID pattern
+    await page.evaluate(() => localStorage.clear());
     await page.goto('/jobs/1');
-    
-    // We expect to be redirected to signup
-    await expect(page).toHaveURL(/.*signup/);
-    
-    // Check if redirect state is passed (internal check via URL or behavior)
-    // Here we check if the heading is visible as a proxy for being on signup page
-    await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
+
+    await expect(page).toHaveURL(/\/signup\/?$/, { timeout: 15000 });
+    await expect(page.getByRole('heading', { name: 'Sign up', exact: true })).toBeVisible({
+      timeout: 15000,
+    });
   });
 });

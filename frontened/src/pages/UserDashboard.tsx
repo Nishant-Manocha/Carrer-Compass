@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { getUserApplications } from "@/lib/backendClient";
-import { getPublicJobs } from "@/lib/api"; // To populate local storage jobs
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Briefcase, Clock, FileText, ExternalLink } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function UserDashboard() {
   const [dbApplications, setDbApplications] = useState<any[]>([]);
@@ -101,8 +99,9 @@ export default function UserDashboard() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex justify-center py-8">
-                <p>Loading your applications...</p>
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <LoadingSpinner className="h-8 w-8 text-primary" />
+                <p className="text-sm text-muted-foreground animate-pulse">Loading your applications...</p>
               </div>
             ) : (
               <Table>

@@ -5,8 +5,9 @@ import { uploadResume, submitApplicationToBackend, ApiError } from '@/lib/backen
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface ApplicationFormProps {
   jobId: string;
@@ -255,7 +256,10 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
             className="w-full"
           >
             {isSubmitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <>
+                <LoadingSpinner className="mr-2 h-4 w-4" />
+                Submitting Application...
+              </>
             ) : (
               'Submit Application'
             )}

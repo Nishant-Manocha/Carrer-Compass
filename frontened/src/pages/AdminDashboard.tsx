@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { adminGetJobs, adminAddJob, adminUpdateJob } from "@/lib/backendClient";
 import { Job } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function AdminDashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -69,7 +68,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     setAddingJob(true);
     try {
-      await adminAddJob(formData);
+      await adminAddJob(formData as Partial<Job>);
       toast.success("Job added successfully!");
       setFormData({
         title: "",
@@ -165,11 +164,17 @@ export default function AdminDashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Existing Jobs</CardTitle>
+              <CardTitle>Manage Jobs</CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <p>Loading jobs...</p>
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <LoadingSpinner className="h-8 w-8 text-primary" />
+              </div>
+            ) : jobs.length === 0 ? (
+                <div className="text-center py-12 border border-dashed rounded-lg">
+                  <p className="text-muted-foreground">No jobs added yet.</p>
+                </div>
               ) : (
                 <Table>
                   <TableHeader>
@@ -193,8 +198,8 @@ export default function AdminDashboard() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="public">Public</SelectItem>
                               <SelectItem value="draft">Draft</SelectItem>
+                              <SelectItem value="public">Public</SelectItem>
                               <SelectItem value="closed">Closed</SelectItem>
                             </SelectContent>
                           </Select>

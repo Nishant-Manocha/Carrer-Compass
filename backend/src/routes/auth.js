@@ -1,6 +1,7 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { getJwtSecret } from "../utils/jwtSecret.js";
 import { User } from "../models/User.js";
 import { sendOTPEmail, sendEmail } from "../utils/mailer.js";
 
@@ -157,7 +158,7 @@ router.post("/verify-otp", async (req, res) => {
 
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || "default_secret",
+      getJwtSecret(),
       { expiresIn: "1d" }
     );
 
@@ -207,7 +208,7 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || "default_secret",
+      getJwtSecret(),
       { expiresIn: "1d" }
     );
 

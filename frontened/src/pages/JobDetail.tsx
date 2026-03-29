@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { fetchJobById } from '@/lib/backendClient';
 import { Job } from '@/lib/types';
@@ -15,32 +15,38 @@ export default function JobDetail() {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const token = localStorage.getItem('token');
+
   useEffect(() => {
-    // Check authentication first
-    const token = localStorage.getItem("token");
     if (!token) {
-      toast.info("Please login or signup to view job details");
-      navigate("/signup", { state: { redirectTo: location.pathname } });
-      return;
+      toast.info('Please login or signup to view job details');
     }
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
 
     const loadJob = async () => {
       if (!id) {
-        navigate("/404");
+        navigate('/404', { replace: true });
         return;
       }
       try {
         const data = await fetchJobById(id);
         setJob(data);
       } catch (error) {
-        console.error("Failed to fetch job:", error);
-        navigate("/404");
-      } finally {
-        setLoading(false);
+        console.error('Failed to fetch job:', error);
+        navigate('/404', { replace: true });
+        return;
       }
+      setLoading(false);
     };
     loadJob();
-  }, [id, navigate]);
+  }, [id, navigate, token]);
+
+  if (!token) {
+    return <Navigate to="/signup" replace state={{ redirectTo: location.pathname }} />;
+  }
 
   if (loading) {
     return (
