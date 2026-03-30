@@ -150,7 +150,14 @@ app.get("/my-applications", authenticateToken, async (req, res) => {
     applications.map(async (app) => {
       const job = await Job.findOne({ id: app.jobId }).lean();
       return {
-        ...app,
+        _id: app._id,
+        jobId: app.jobId,
+        applicantEmail: app.applicantEmail,
+        name: app.name,
+        email: app.email,
+        phone: app.phone,
+        resumeReference: app.resumeReference,
+        createdAt: app.createdAt,
         jobTitle: job ? job.title : "Unknown Job",
         jobShortDescription: job ? job.shortDescription : "N/A"
       };

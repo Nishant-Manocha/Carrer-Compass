@@ -11,6 +11,8 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface ApplicationFormProps {
   jobId: string;
+  jobTitle?: string;
+  jobShortDescription?: string;
 }
 
 interface FieldErrors {
@@ -20,7 +22,7 @@ interface FieldErrors {
   resume?: string;
 }
 
-export function ApplicationForm({ jobId }: ApplicationFormProps) {
+export function ApplicationForm({ jobId, jobTitle, jobShortDescription }: ApplicationFormProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -104,6 +106,8 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
       const applications = JSON.parse(localStorage.getItem('myApplications') || '[]');
       applications.push({
         jobId,
+        jobTitle: jobTitle || "Unknown Job",
+        jobShortDescription: jobShortDescription || "No description available",
         name: cleanedName,
         email: cleanedEmail,
         phone: cleanedPhone,

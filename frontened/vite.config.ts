@@ -6,7 +6,8 @@ import path from "path";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    port: 5173,
+    strictPort: true,// Fail loudly if port is taken instead of silently switching
     hmr: {
       overlay: false,
     },

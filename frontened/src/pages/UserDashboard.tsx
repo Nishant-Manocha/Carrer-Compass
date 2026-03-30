@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getUserApplications } from "@/lib/backendClient";
+import { getUserApplications, fetchPublicJobs } from "@/lib/backendClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -29,15 +29,31 @@ export default function UserDashboard() {
       // 1. Fetch from Database (Primary source)
       const db = await getUserApplications();
 
-      // 2. Fetch from Local Storage (Fallback for newly applied jobs not yet synced)
+      // 2. Fetch live jobs data to merge metadata, bypassing backend bugs
+      const allJobs = await fetchPublicJobs().catch(() => []);
+      const jobsMap = new Map<string, any>(allJobs.map((j: any) => [String(j.id), j]));
+
+      // 3. Fetch from Local Storage (Fallback for newly applied jobs not yet synced)
       const local = JSON.parse(localStorage.getItem("myApplications") || "[]");
-      
+      const localMap = new Map<string, any>(local.map((l: any) => [String(l.jobId), l]));
+
+      // Enrich the DB applications prioritizing live jobs fetch, then local storage
+      const enrichedDb = db.map((app: any) => {
+        const localData = localMap.get(String(app.jobId));
+        const jobData = jobsMap.get(String(app.jobId));
+        return {
+          ...app,
+          jobTitle: app.jobTitle || jobData?.title || localData?.jobTitle || "Applied Job",
+          jobShortDescription: app.jobShortDescription || jobData?.shortDescription || localData?.jobShortDescription || "Details unavailable..."
+        };
+      });
+
       // Filter local applications to only those that aren't in the DB yet
-      const dbJobIds = new Set(db.map((app: any) => String(app.jobId)));
+      const dbJobIds = new Set(enrichedDb.map((app: any) => String(app.jobId)));
       const uniqueLocal = local.filter((app: any) => !dbJobIds.has(String(app.jobId)));
 
       // 3. Combine them
-      const mergedApplications = [...db, ...uniqueLocal].sort((a, b) => 
+      const mergedApplications = [...enrichedDb, ...uniqueLocal].sort((a, b) => 
         new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
       );
 
@@ -125,9 +141,11 @@ export default function UserDashboard() {
                     dbApplications.map((app, index) => (
                       <TableRow key={app._id || `app-${index}`}>
                         <TableCell className="font-mono text-xs">{app.jobId}</TableCell>
-                        <TableCell className="font-medium">{app.jobTitle}</TableCell>
+                        <TableCell className="font-medium">
+                          {app.jobTitle || "Applied Job"}
+                        </TableCell>
                         <TableCell className="max-w-xs truncate text-xs text-muted-foreground">
-                          {app.jobShortDescription}
+                          {app.jobShortDescription || "Details unavailable..."}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button 

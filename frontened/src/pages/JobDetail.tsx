@@ -34,6 +34,7 @@ export default function JobDetail() {
       try {
         const data = await fetchJobById(id);
         setJob(data);
+        console.log(data);
       } catch (error) {
         console.error('Failed to fetch job:', error);
         navigate('/404', { replace: true });
@@ -137,7 +138,11 @@ export default function JobDetail() {
           </div>
 
           <div className="mt-10">
-            <ApplicationForm jobId={job.id} />
+            <ApplicationForm
+              jobId={job.id}
+              jobTitle={job.title}
+              jobShortDescription={job.shortDescription}
+            />
           </div>
         </motion.div>
       </div>

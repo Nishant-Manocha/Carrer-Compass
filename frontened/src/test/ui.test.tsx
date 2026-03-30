@@ -3,13 +3,11 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Index from '@/pages/Index';
 import Login from '@/pages/Login';
-import Signup from '@/pages/Signup';
 import AdminDashboard from '@/pages/AdminDashboard';
 import UserDashboard from '@/pages/UserDashboard';
 import NotFound from '@/pages/NotFound';
 import JobDetail from '@/pages/JobDetail';
 import { ApplicationForm } from '@/components/ApplicationForm';
-import VerifyOTP from '@/pages/VerifyOTP';
 
 // Mock fetch globally
 (globalThis as any).fetch = vi.fn();
@@ -103,17 +101,17 @@ describe('Career-Compass UI Integration Tests', () => {
   it('renders user dashboard with application history', async () => {
     localStorage.setItem('token', 'fake-token');
     localStorage.setItem('user', JSON.stringify({ name: 'Nishant', email: 'test@example.com' }));
-    
+
     // Mock for getUserApplications
     (fetch as any).mockResolvedValue({
       ok: true,
       json: async () => [
-        { 
-          _id: 'app1', 
-          jobId: '1', 
-          jobTitle: 'Senior Frontend Engineer', 
-          jobShortDescription: 'Desc', 
-          createdAt: new Date().toISOString() 
+        {
+          _id: 'app1',
+          jobId: '1',
+          jobTitle: 'Senior Frontend Engineer',
+          jobShortDescription: 'Desc',
+          createdAt: new Date().toISOString()
         }
       ],
     });
@@ -146,8 +144,10 @@ describe('Career-Compass UI Integration Tests', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/Oops! Page not found/i)).toBeInTheDocument();
-    expect(screen.getByText('/invalid-route')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Oops! Page not found/i)).toBeInTheDocument();
+      expect(screen.getByText('/invalid-route')).toBeInTheDocument();
+    });
   });
 
   // Test 6: Job Detail page rendering
@@ -197,9 +197,9 @@ describe('Career-Compass UI Integration Tests', () => {
     localStorage.setItem('user', JSON.stringify({ role: 'user' }));
 
     (fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => [],
-      });
+      ok: true,
+      json: async () => [],
+    });
 
     render(
       <MemoryRouter>
@@ -218,6 +218,9 @@ describe('Career-Compass UI Integration Tests', () => {
   describe('Frontend Edge Cases', () => {
     // Test 9: Handle API Server Error gracefully
     it('shows error toast when API fails to fetch jobs', async () => {
+      // Silence the intentional console.error from our error boundary check
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => { });
+
       (fetch as any).mockResolvedValue({
         ok: false,
         status: 500,
@@ -234,13 +237,15 @@ describe('Career-Compass UI Integration Tests', () => {
       await waitFor(() => {
         expect(screen.queryByText('Senior Frontend Engineer')).not.toBeInTheDocument();
       });
+
+      spy.mockRestore();
     });
 
     // Test 10: Empty applications state
     it('shows empty message in user dashboard when no applications exist', async () => {
       localStorage.setItem('token', 'fake-token');
       localStorage.setItem('user', JSON.stringify({ name: 'Nishant', email: 'test@example.com' }));
-      
+
       (fetch as any).mockResolvedValue({
         ok: true,
         json: async () => [],
@@ -260,8 +265,8 @@ describe('Career-Compass UI Integration Tests', () => {
     // Test 11: Loading states
     it('displays loading message while fetching job details', async () => {
       // Mock fetch to hang (never resolve in this test)
-      (fetch as any).mockReturnValue(new Promise(() => {}));
-      
+      (fetch as any).mockReturnValue(new Promise(() => { }));
+
       // Must be logged in to avoid redirect to /signup
       localStorage.setItem('token', 'fake-token');
 
